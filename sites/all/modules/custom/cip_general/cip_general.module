@@ -1,0 +1,166 @@
+<?php
+
+/**
+ * @file
+ * Implements general functionalities for the CBI project.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function cip_general_menu() {
+  // $items['events'] = array(
+  //   'title' => 'Events',
+  //   'page callback' => 'events_list',
+  //   'page arguments' => array(),
+  //   'access callback' => TRUE,
+  //   'type' => MENU_NORMAL_ITEM,
+  //   'menu_name' => 'main-menu',
+  //   'weight' => 2,
+  // );
+
+  return $items;
+}
+
+function events_list() {
+  $query = new EntityFieldQuery();
+  $result = $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'events')
+    ->execute();
+  if (empty($result['node'])) {
+    return "<h3>Keep in touch with us for future events.</h3>";
+  }
+  $nodes = node_load_multiple(array_keys($result['node']));
+  return node_view_multiple($nodes, $view_mode = 'teaser', $weight = 0, $langcode = NULL);
+}
+
+/**
+ * Implements hook_init().
+ */
+function cip_general_init() {
+  // echo '<pre>';
+  // var_export(node_load(3));
+  // var_dump($_GET['q']);
+}
+
+function cip_general_preprocess_node (&$variables) {
+  unset($variables['content']['links']['node']['#links']['node-readmore']);
+}
+
+/**
+ * Implements hook_custom_theme().
+ */
+function cip_general_custom_theme() {
+  $args = arg();
+  if (reset($args) == 'user') {
+    return 'ember';
+  }
+}
+
+
+/**
+ * Implements hook_menu_breadcrumb_alter().
+ */
+function cip_general_menu_breadcrumb_alter(&$active_trail, $item) {
+  if (user_access('administer bidding app')) {
+    foreach ($active_trail as $key => $item) {
+      if (isset($item['link_path']) && $item['link_path'] == 'admin') {
+        unset($active_trail[$key]);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_page_alter().
+ */
+function cip_general_page_alter(&$page) {
+  // Remove the breadcrumb on login page; set to empty array.
+  // if ($_GET['q'] == 'user/login') {
+  //   drupal_set_breadcrumb(array());
+  // }
+}
+
+/**
+ * Returns the rid by role name.
+ */
+function cip_general_get_role_by_name($name) {
+  $roles = user_roles();
+  return array_search($name, $roles);
+}
+
+/**
+* Implements hook_block_info().
+*/
+function cip_general_block_info() {
+  $blocks = array();
+  $blocks['cip_left_banner'] = array(
+    'title' => t(''),
+    'info' => t('The left sidebar banner'),
+    'region' => 'sidebar_first',
+    'status' => 0,
+  );
+  return $blocks;
+}
+/**
+* Implements hook_block_view().
+*/
+function cip_general_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'cip_left_banner':
+      $block['region'] = 'sidebar_first';
+      $block['subject'] = '';
+      $block['content'] = cip_general_banner_block_content();
+      break;
+  }
+  return $block;
+}
+
+function cip_general_banner_block_content() {
+  $output = t('<a data-track="NCwwLDAsMCwx" class="gofollow" target="_blank" href="/sustain-us"><img style="width:100%;" src="/sites/default/files/images/sustain-us-banner.jpg"></a>');
+  return $output;
+}
+
+/**
+ * Implements hook_block_info_alter().
+ */
+function cip_general_block_info_alter(&$blocks, $theme, $code_blocks) {
+  if ($theme == 'nexus') {
+    $blocks['social_media_links']['social-media-links']['region'] = 'sidebar_first';
+    $blocks['social_media_links']['social-media-links']['status'] = TRUE;
+    $blocks['social_media_links']['social-media-links']['weight'] = 1;
+  }
+}
+
+/**
+ * Implements hook_node_presave().
+ */
+function cip_general_node_presave($node) {
+  // kpr($node);
+  // exit;
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function cip_general_node_view($node, $view_mode, $langcode) {
+  // kpr($node);
+}
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function cip_general_preprocess_html(&$variables) {
+  // Redirect 404 and 403 response pages to front page.
+  $headers = drupal_get_http_header();
+
+  if (isset($headers['status']) && in_array($headers['status'], array('404 Not Found', '403 Forbidden'))) {
+    // var_dump($headers);
+    // exit;
+    global $user;
+  //   $not_found_url = ((isset($user->uid) && (bool) $user->uid) || !isset($user->uid)) ? 'admin/index' : 'user/login';
+    $not_found_url = '<front>';
+    // drupal_goto($not_found_url);
+  }
+}

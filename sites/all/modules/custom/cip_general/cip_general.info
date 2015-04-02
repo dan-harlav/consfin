@@ -1,0 +1,7 @@
+name = SOS Bambini General functions
+description = Module for storing general functionalities.
+package = SOS Bambini
+core = 7.x
+
+files[] = cip_general.module
+files[] = includes/cip_general.helper.inc
